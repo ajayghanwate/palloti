@@ -4,12 +4,11 @@ import { useAuth } from '../context/AuthContext';
 import { HiOutlineAcademicCap, HiOutlineMail, HiOutlineLockClosed, HiOutlineUser, HiOutlineBookOpen } from 'react-icons/hi';
 import toast from 'react-hot-toast';
 
-export default function LoginPage() {
-    const [isLogin, setIsLogin] = useState(true);
+export default function RegisterPage() {
     const [isTeacher, setIsTeacher] = useState(true);
     const [form, setForm] = useState({ name: '', email: '', password: '', subject: '', class: '' });
     const [loading, setLoading] = useState(false);
-    const { login, register, demoLogin } = useAuth();
+    const { register } = useAuth();
     const navigate = useNavigate();
 
     const handleChange = (e) => {
@@ -20,31 +19,19 @@ export default function LoginPage() {
         e.preventDefault();
         setLoading(true);
         try {
-            if (isLogin) {
-                await login(form.email, form.password);
+            if (isTeacher) {
+                await register(form.name, form.email, form.password, { subject: form.subject, role: 'teacher' });
             } else {
-                if (isTeacher) {
-                    await register(form.name, form.email, form.password, { subject: form.subject, role: 'teacher' });
-                } else {
-                    await register(form.name, form.email, form.password, { class: form.class, role: 'student' });
-                }
+                await register(form.name, form.email, form.password, { class: form.class, role: 'student' });
             }
-            toast.success(isLogin ? 'Welcome back!' : 'Account created successfully!');
+            toast.success('Account created successfully!');
             navigate('/');
         } catch (err) {
-            // This should rarely happen now since AuthContext handles failures
             console.error('Unexpected error:', err);
             toast.error('An unexpected error occurred. Please try again.');
         } finally {
             setLoading(false);
         }
-    };
-
-
-    const handleDemoLogin = () => {
-        demoLogin();
-        toast.success('Welcome to MentorAI demo!');
-        navigate('/');
     };
 
     return (
@@ -57,15 +44,15 @@ export default function LoginPage() {
                 }}
             />
 
-            {/* Login Card */}
+            {/* Register Card */}
             <div className="login-card">
                 {/* Logo */}
                 <div className="text-center mb-8">
                     <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-50 mb-4">
                         <HiOutlineAcademicCap className="w-8 h-8 text-blue-600" />
                     </div>
-                    <h1 className="text-2xl font-bold text-gray-900 mb-1">MentorAI</h1>
-                    <p className="text-sm text-gray-500">AI-Powered Teaching Co-Pilot</p>
+                    <h1 className="text-2xl font-bold text-gray-900 mb-1">Create Account</h1>
+                    <p className="text-sm text-gray-500">Join MentorAI Teaching Co-Pilot</p>
                 </div>
 
                 {/* Segmented Control - Teacher/Student Toggle */}
@@ -87,25 +74,23 @@ export default function LoginPage() {
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
-                    {!isLogin && (
-                        <div>
-                            <label className="input-label">Full Name</label>
-                            <div className="input-wrapper">
-                                <HiOutlineUser className="input-icon" />
-                                <input
-                                    type="text"
-                                    name="name"
-                                    value={form.name}
-                                    onChange={handleChange}
-                                    placeholder={isTeacher ? "Dr. John Smith" : "Alex Doe"}
-                                    className="input-field"
-                                    required={!isLogin}
-                                />
-                            </div>
+                    <div>
+                        <label className="input-label">Full Name</label>
+                        <div className="input-wrapper">
+                            <HiOutlineUser className="input-icon" />
+                            <input
+                                type="text"
+                                name="name"
+                                value={form.name}
+                                onChange={handleChange}
+                                placeholder={isTeacher ? "Dr. John Smith" : "Alex Doe"}
+                                className="input-field"
+                                required
+                            />
                         </div>
-                    )}
+                    </div>
 
-                    {!isLogin && isTeacher && (
+                    {isTeacher && (
                         <div>
                             <label className="input-label">Subject</label>
                             <div className="input-wrapper">
@@ -115,17 +100,17 @@ export default function LoginPage() {
                                     name="subject"
                                     value={form.subject}
                                     onChange={handleChange}
-                                    placeholder="e.g. Data Structures"
+                                    placeholder="e.g., Mathematics"
                                     className="input-field"
-                                    required={!isLogin && isTeacher}
+                                    required
                                 />
                             </div>
                         </div>
                     )}
 
-                    {!isLogin && !isTeacher && (
+                    {!isTeacher && (
                         <div>
-                            <label className="input-label">Class/Grade</label>
+                            <label className="input-label">Class</label>
                             <div className="input-wrapper">
                                 <HiOutlineBookOpen className="input-icon" />
                                 <input
@@ -133,9 +118,9 @@ export default function LoginPage() {
                                     name="class"
                                     value={form.class}
                                     onChange={handleChange}
-                                    placeholder="e.g. Class 10 - Section A"
+                                    placeholder="e.g., 10th Grade"
                                     className="input-field"
-                                    required={!isLogin && !isTeacher}
+                                    required
                                 />
                             </div>
                         </div>
@@ -181,26 +166,18 @@ export default function LoginPage() {
                         {loading ? (
                             <div className="spinner-small" />
                         ) : (
-                            isLogin ? (isTeacher ? 'Teacher Sign In' : 'Student Sign In') : 'Create Account'
+                            'Create Account'
                         )}
                     </button>
                 </form>
 
-                {/* Register Button */}
-                <button
-                    onClick={() => navigate('/register')}
-                    className="btn-register"
-                >
-                    Create Account
-                </button>
-
                 <p className="text-center text-sm text-gray-600 mt-6">
-                    Don't have an account?{' '}
+                    Already have an account?{' '}
                     <button
-                        onClick={() => navigate('/register')}
+                        onClick={() => navigate('/login')}
                         className="text-blue-600 hover:text-blue-700 font-medium transition-colors"
                     >
-                        Register
+                        Sign In
                     </button>
                 </p>
             </div>
