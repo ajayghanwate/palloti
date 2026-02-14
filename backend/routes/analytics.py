@@ -9,14 +9,16 @@ from typing import Dict, Any
 router = APIRouter(prefix="/analytics", tags=["Analytics"])
 
 @router.post("/analyze-marks")
-async def analyze_marks(file: UploadFile = File(...), current_user: dict = Depends(get_current_user)) -> Dict[str, Any]:
+async def analyze_marks(file: UploadFile = File(...), topics_covered: str = "General", current_user: dict = Depends(get_current_user)) -> Dict[str, Any]:
     if not file.filename.endswith('.csv'):
         raise HTTPException(status_code=400, detail="Only CSV files are allowed")
     
     content = await file.read()
     try:
         avg_score, weak_topics, risk_students, summary = parser_service.parse_marks_csv(content)
-        ai_analysis = await ai_service.analyze_marks(summary)
+        # Add the context to the summary
+        full_context = f"{summary} Topics tested: {topics_covered}"
+        ai_analysis = await ai_service.analyze_marks(full_context)
         
         result = {
             "average_score": round(avg_score, 2),
@@ -127,6 +129,42 @@ async def analyze_syllabus(file: UploadFile = File(...), subject: str = "General
             "major_topics": ai_analysis.get("major_topics"),
             "assessment_focus": ai_analysis.get("assessment_focus"),
             "message": "PDF uploaded and analyzed. Use material_id to generate assessments from this content."
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/analyze-attendance")
+async def analyze_attendance(file: UploadFile = File(...), subject: str = "General", current_user: dict = Depends(get_current_user)) -> Dict[str, Any]:
+    """Analyze attendance CSV data for trends and student risk"""
+    if not file.filename.endswith('.csv'):
+        raise HTTPException(status_code=400, detail="Only CSV files are allowed")
+    
+    content = await file.read()
+    try:
+        attendance_records = parser_service.parse_attendance_csv(content)
+        
+        # Insert records into DB
+        for record in attendance_records:
+            record["subject"] = subject
+            if current_user:
+                record["teacher_id"] = current_user["id"]
+        
+        supabase_service.get_client().table("attendance").insert(attendance_records).execute()
+        
+        # Create a summary for AI
+        total_records = len(attendance_records)
+        absent_count = len([r for r in attendance_records if r["status"] == "Absent"])
+        summary_text = f"Total records: {total_records}. Absences: {absent_count}."
+        
+        ai_analysis = await ai_service.analyze_attendance(summary_text)
+        
+        return {
+            "total_records": total_records,
+            "absent_count": absent_count,
+            "risk_analysis": ai_analysis.get("risk_analysis"),
+            "engagement_score": ai_analysis.get("engagement_score"),
+            "suggestions": ai_analysis.get("suggestions"),
+            "message": "Attendance analyzed and saved."
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

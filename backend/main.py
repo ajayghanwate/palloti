@@ -6,7 +6,11 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-app = FastAPI(title="MentorAI Backend", description="AI Academic Co-Pilot for Educators")
+app = FastAPI(
+    title="MentorAI Backend", 
+    description="AI Academic Co-Pilot for Educators",
+    swagger_ui_parameters={"persistAuthorization": True}
+)
 
 # Configure CORS
 app.add_middleware(
@@ -17,10 +21,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+from routes import analytics, academic, auth, notifications
+
 # Include Routes
 app.include_router(analytics.router)
 app.include_router(academic.router)
 app.include_router(auth.router)
+app.include_router(notifications.router)
+
 
 @app.get("/")
 async def root():

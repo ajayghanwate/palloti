@@ -39,7 +39,16 @@ class UserRegister(BaseModel):
     password: str
     subject: Optional[str] = None
 
-class UserLogin(BaseModel):
+class LoginRequest(BaseModel):
+    email: str
+    password: str
+
+class StudentLoginRequest(BaseModel):
+    email: str
+    password: str
+
+class StudentRegister(BaseModel):
+    name: str
     email: str
     password: str
 
@@ -50,3 +59,11 @@ class Token(BaseModel):
 class TokenData(BaseModel):
     email: Optional[str] = None
     user_id: Optional[str] = None
+
+class LearningGapRequest(BaseModel):
+    subject: str
+
+class LearningGapResponse(BaseModel):
+    detected_gaps: List[str]
+    recovery_plan: str
+    at_risk_topics: List[str]

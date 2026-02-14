@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException, Depends
-from models.schemas import AssessmentRequest, FeedbackRequest, MaterialBasedAssessmentRequest
+from models.schemas import AssessmentRequest, FeedbackRequest, MaterialBasedAssessmentRequest, LearningGapRequest
 from services.ai_service import ai_service
 from services.supabase_service import supabase_service
 from routes.auth import get_current_user
@@ -91,5 +91,50 @@ async def generate_feedback(request: FeedbackRequest, current_user: dict = Depen
         supabase_service.get_client().table("feedback").insert(data_to_insert).execute()
         
         return feedback
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/detect-learning-gaps")
+async def detect_learning_gaps(request: LearningGapRequest, current_user: dict = Depends(get_current_user)) -> Dict[str, Any]:
+    """Cross-references marks with syllabus to identify student struggles"""
+    try:
+        # 1. Fetch performance summary
+        marks_res = supabase_service.get_client().table("marks_analysis").select("performance_summary").order("created_at", desc=True).limit(1).execute()
+        
+        # 2. Fetch syllabus topics
+        syllabus_res = supabase_service.get_client().table("syllabus_analysis").select("major_topics").order("created_at", desc=True).limit(1).execute()
+        
+        if not marks_res.data or not syllabus_res.data:
+            raise HTTPException(status_code=404, detail="Performance or syllabus data not found. Please analyze both first.")
+        
+        marks_summary = marks_res.data[0]["performance_summary"]
+        topics = syllabus_res.data[0]["major_topics"]
+        
+        # 3. Analyze with AI
+        analysis = await ai_service.detect_learning_gaps(marks_summary, topics)
+        
+        return analysis
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+@router.get("/my-feedback")
+async def get_my_feedback(current_user: dict = Depends(get_current_user)) -> Dict[str, Any]:
+    """Allows authenticated students to fetch their OWN feedback"""
+    if current_user["role"] != "student":
+         raise HTTPException(status_code=403, detail="This endpoint is for students only.")
+         
+    student_name = current_user["email"] # marking the name as 'email' in the token 'sub' field for simplicity
+    
+    try:
+        result = supabase_service.get_client().table("feedback").select("*").ilike("student_name", f"%{student_name}%").order("created_at", desc=True).limit(1).execute()
+        
+        if not result.data:
+            # Fallback: maybe the token name is slightly different?
+            raise HTTPException(status_code=404, detail=f"No feedback found for you ({student_name}). Please asking your teacher to generate it.")
+            
+        return result.data[0]["feedback_data"]
+    except HTTPException as e:
+        raise e
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
