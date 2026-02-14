@@ -20,6 +20,19 @@
   --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
 }
 
+/* Light mode variables */
+html.light-mode {
+  --bg-primary: #F8FAFC;
+  --bg-secondary: #FFFFFF;
+  --bg-tertiary: #F1F5F9;
+  --text-primary: #1E293B;
+  --text-secondary: #475569;
+  --text-muted: #64748B;
+  --glass-bg: rgba(255, 255, 255, 0.7);
+  --glass-border: rgba(0, 0, 0, 0.08);
+  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
 * {
   margin: 0;
   padding: 0;
@@ -173,6 +186,91 @@ body {
 
 .login-input::placeholder {
   color: var(--text-muted);
+}
+
+/* Light mode — login page */
+.login-light-bg {
+  background: linear-gradient(135deg, #E0E7FF, #F0F4FF, #EDE9FE);
+}
+
+.login-input-light {
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  color: #1E293B;
+}
+
+.login-input-light:focus {
+  border-color: #6366F1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15), 0 0 16px rgba(99, 102, 241, 0.08);
+  background: #fff;
+}
+
+.login-input-light::placeholder {
+  color: #94A3B8;
+}
+
+.btn-secondary-light {
+  background: rgba(255, 255, 255, 0.7);
+  color: #334155;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  padding: 10px 24px;
+  border-radius: 12px;
+  font-weight: 500;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-secondary-light:hover {
+  background: rgba(255, 255, 255, 0.9);
+  border-color: #6366F1;
+}
+
+/* Professional animations */
+@keyframes gentlePulse {
+
+  0%,
+  100% {
+    opacity: 0.8;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+}
+
+.gentle-pulse {
+  animation: gentlePulse 8s ease-in-out infinite;
+}
+
+@keyframes slideUpFade {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.slide-up-fade {
+  animation: slideUpFade 0.6s ease-out;
+}
+
+/* Input focus animation */
+.login-input-animate {
+  transition: all 0.3s ease;
+}
+
+.login-input-animate:focus {
+  transform: scale(1.01);
 }
 
 /* Select */
