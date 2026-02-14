@@ -3,6 +3,7 @@ from services.parser_service import parser_service
 from services.ai_service import ai_service
 from services.supabase_service import supabase_service
 from routes.auth import get_current_user
+from models.schemas import SyllabusAnalysisRequest, UploadMaterialRequest
 from typing import Dict, Any
 
 router = APIRouter(prefix="/analytics", tags=["Analytics"])
@@ -40,6 +41,38 @@ async def analyze_marks(file: UploadFile = File(...), current_user: dict = Depen
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@router.post("/upload-text-material")
+async def upload_text_material(request: UploadMaterialRequest, content: str, current_user: dict = Depends(get_current_user)) -> Dict[str, Any]:
+    """Upload raw text material directly if PDF parsing fails"""
+    try:
+        word_count = len(content.split())
+        
+        material_data = {
+            "subject": request.subject,
+            "unit": request.unit,
+            "title": request.title or f"{request.subject}_{request.unit}_text",
+            "content_text": content,
+            "file_name": "manual_upload.txt",
+            "word_count": word_count
+        }
+        if current_user:
+            material_data["teacher_id"] = current_user["id"]
+        
+        material_result = supabase_service.get_client().table("study_materials").insert(material_data).execute()
+        material_id = material_result.data[0]["id"] if material_result.data else None
+        
+        # Analyze with AI
+        ai_analysis = await ai_service.analyze_syllabus(content)
+        
+        return {
+            "material_id": material_id,
+            "word_count": word_count,
+            "major_topics": ai_analysis.get("major_topics"),
+            "message": "Text content uploaded successfully. Use material_id to generate assessments."
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @router.post("/analyze-syllabus")
 async def analyze_syllabus(file: UploadFile = File(...), subject: str = "General", unit: str = "Unit 1", current_user: dict = Depends(get_current_user)) -> Dict[str, Any]:
     if not file.filename.endswith('.pdf'):
@@ -48,6 +81,14 @@ async def analyze_syllabus(file: UploadFile = File(...), subject: str = "General
     content = await file.read()
     try:
         text = parser_service.parse_syllabus_pdf(content)
+        if not text or text.startswith("Warning:"):
+            return {
+                "material_id": None,
+                "word_count": 0,
+                "error": "Could not extract text from this PDF. It might be a scan or image-based.",
+                "suggestion": "Please use the /analytics/upload-text-material endpoint and paste the text directly for 100% reliability."
+            }
+            
         word_count = len(text.split())
         
         # Store the PDF content in database
