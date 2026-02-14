@@ -12,3 +12,6 @@ pydantic-settings
 python-jose[cryptography]
 passlib[bcrypt]
 pypdf
+fpdf2
+httpx
+openai-whisper

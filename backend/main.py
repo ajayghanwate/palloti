@@ -12,6 +12,8 @@ app = FastAPI(
     swagger_ui_parameters={"persistAuthorization": True}
 )
 
+print("🚀 MentorAI Backend Reloaded Successfully")
+
 # Configure CORS
 app.add_middleware(
     CORSMiddleware,

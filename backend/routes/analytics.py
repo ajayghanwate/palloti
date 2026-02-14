@@ -1,10 +1,16 @@
 from fastapi import APIRouter, UploadFile, File, HTTPException, Depends
+from fastapi.responses import FileResponse
 from services.parser_service import parser_service
 from services.ai_service import ai_service
 from services.supabase_service import supabase_service
+from services.whisper_service import whisper_service
+from services.pdf_service import pdf_service
 from routes.auth import get_current_user
 from models.schemas import SyllabusAnalysisRequest, UploadMaterialRequest
 from typing import Dict, Any
+import os
+import shutil
+import tempfile
 
 router = APIRouter(prefix="/analytics", tags=["Analytics"])
 
@@ -168,3 +174,84 @@ async def analyze_attendance(file: UploadFile = File(...), subject: str = "Gener
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/lecture-to-pdf")
+async def lecture_to_pdf(
+    file: UploadFile = File(...),
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    Convert lecture audio into structured PDF notes.
+    Flow: Audio -> Whisper (Transcribe) -> Groq (Analyze) -> PDF (Notes)
+    """
+    # 1. Validation
+    # !!! UPDATED FOR MPEG SUPPORT !!!
+    allowed_extensions = {'.mp3', '.wav', '.m4a', '.ogg', '.mpeg', '.mpga', '.mp4'}
+    file_ext = os.path.splitext(file.filename)[1].lower()
+    
+    print(f"DEBUG: Processing file {file.filename} with extension {file_ext}") # This will show in terminal
+    
+    if file_ext not in allowed_extensions:
+        raise HTTPException(
+            status_code=400, 
+            detail=f"FORCED UPDATE: Unsupported format '{file_ext}'. Supported: {sorted(list(allowed_extensions))}"
+        )
+
+    # 2. Save temporary file
+    temp_dir = tempfile.mkdtemp()
+    temp_audio_path = os.path.join(temp_dir, file.filename)
+    
+    try:
+        with open(temp_audio_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+
+        # 3. Transcribe with Whisper
+        print(f"Starting transcription for {file.filename}...")
+        transcript = await whisper_service.transcribe(temp_audio_path)
+        
+        if not transcript:
+            raise HTTPException(status_code=500, detail="Transcription failed. Ensure Whisper service is running on localhost:9000")
+
+        # 4. Analyze with Groq AI
+        print("Analyzing transcript...")
+        structured_notes = await ai_service.analyze_lecture(transcript)
+
+        # 5. Generate PDF
+        print("Generating PDF notes...")
+        pdf_filename = f"Lecture_Notes_{os.path.splitext(file.filename)[0]}.pdf"
+        output_pdf_path = os.path.join(temp_dir, pdf_filename)
+        
+        pdf_service.create_lecture_notes(structured_notes, output_pdf_path)
+
+        # 6. Save to Supabase (Database Storage)
+        try:
+            supabase_service.get_client().table("lecture_notes").insert({
+                "teacher_id": current_user.get("id"), # Assumes teacher is logged in
+                "title": structured_notes.get("title", "Untitled Lecture"),
+                "summary": structured_notes.get("summary"),
+                "topics": structured_notes.get("topics"),
+                "concepts": structured_notes.get("concepts"),
+                "definitions": structured_notes.get("definitions"),
+                "examples": structured_notes.get("examples"),
+                # "transcript": transcript # Optional: Save raw transcript if needed (can be large)
+            }).execute()
+            print("Lecture notes saved to database.")
+        except Exception as db_error:
+            print(f"Database Error (Non-blocking): {str(db_error)}")
+
+        # 6. Return File Response
+        return FileResponse(
+            path=output_pdf_path,
+            filename=pdf_filename,
+            media_type="application/pdf"
+        )
+
+    except Exception as e:
+        print(f"Error in lecture-to-pdf: {str(e)}")
+        if isinstance(e, HTTPException):
+            raise e
+        raise HTTPException(status_code=500, detail=f"Lecture processing error: {str(e)}")
+    finally:
+        # Note: We don't delete the temp_dir here because FileResponse needs it.
+        # Ideally, use a BackgroundTask to cleanup after sending.
+        pass

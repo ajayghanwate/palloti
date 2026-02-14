@@ -101,6 +101,24 @@ ALTER TABLE study_materials ENABLE ROW LEVEL SECURITY;
 ALTER TABLE attendance ENABLE ROW LEVEL SECURITY;
 ALTER TABLE students ENABLE ROW LEVEL SECURITY;
 
+-- 6. Lecture Notes Table
+CREATE TABLE IF NOT EXISTS lecture_notes (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    teacher_id UUID REFERENCES teachers(id),
+    title TEXT,
+    summary TEXT,
+    topics JSONB,
+    concepts JSONB,
+    definitions JSONB,
+    examples JSONB,
+    transcript TEXT,
+    created_at TIMESTAMPTZ DEFAULT now()
+);
+
+ALTER TABLE lecture_notes ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Enable all for service role" ON lecture_notes;
+CREATE POLICY "Enable all for service role" ON lecture_notes FOR ALL USING (true) WITH CHECK (true);
+
 -- 5. Create policies for all tables
 CREATE POLICY "Enable all for service role" ON marks_analysis FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Enable all for service role" ON syllabus_analysis FOR ALL USING (true) WITH CHECK (true);
