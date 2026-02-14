@@ -8,7 +8,8 @@ import toast from 'react-hot-toast';
 export default function LoginPage() {
     const [isLogin, setIsLogin] = useState(true);
     const { isDark, toggleTheme } = useTheme();
-    const [form, setForm] = useState({ name: '', email: '', password: '', subject: '' });
+    const [isTeacher, setIsTeacher] = useState(true);
+    const [form, setForm] = useState({ name: '', email: '', password: '', subject: '', class: '' });
     const [loading, setLoading] = useState(false);
     const { login, register, demoLogin } = useAuth();
     const navigate = useNavigate();
@@ -22,9 +23,16 @@ export default function LoginPage() {
         setLoading(true);
         try {
             if (isLogin) {
+                // Determine if login is for teacher or student - currently using same login function
+                // You might need to pass role to login function if backend requires it
                 await login(form.email, form.password);
             } else {
-                await register(form.name, form.email, form.password);
+                if (isTeacher) {
+                    await register(form.name, form.email, form.password, { subject: form.subject, role: 'teacher' });
+                } else {
+                    // Start student registration
+                    await register(form.name, form.email, form.password, { class: form.class, role: 'student' });
+                }
             }
             toast.success(isLogin ? 'Welcome back!' : 'Account created successfully!');
             navigate('/');
@@ -89,7 +97,7 @@ export default function LoginPage() {
                     : 'bg-white/95 backdrop-blur-xl'
                     }`}>
                     {/* Logo - adjusted margin */}
-                    <div className="text-center mb-12 animate-fade-in">
+                    <div className="text-center mb-8 animate-fade-in">
                         <div className="inline-flex items-center justify-center w-20 h-20 rounded-[2rem] bg-gradient-to-br from-blue-400 via-blue-500 to-blue-600 mb-6 shadow-2xl shadow-blue-500/40">
                             <HiOutlineAcademicCap className="w-10 h-10 text-white" />
                         </div>
@@ -97,12 +105,31 @@ export default function LoginPage() {
                         <p className={`text-sm mt-2 ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>AI-Powered Teaching Co-Pilot</p>
                     </div>
 
-                    {/* Form heading */}
-                    <h2 className={`text-2xl font-bold mb-10 text-center tracking-tight ${isDark ? 'text-white' : 'text-gray-800'}`}>
-                        {isLogin ? 'Welcome Back' : 'Create Account'}
-                    </h2>
+                    {/* Role Toggle */}
+                    {/* Role Toggle - Responsive 400px max-width & 100px height */}
+                    <div className="flex bg-black/20 p-2 rounded-2xl mb-8 relative w-full max-w-[400px] h-[100px] mx-auto self-center">
+                        <div
+                            className={`absolute top-2 bottom-2 w-[calc(50%-8px)] bg-blue-600 rounded-xl transition-all duration-300 ${!isTeacher ? 'translate-x-[100%] left-2' : 'left-2'}`}
+                        />
+                        <button
+                            type="button"
+                            onClick={() => setIsTeacher(true)}
+                            className={`flex-1 relative z-10 h-full flex flex-col items-center justify-center rounded-xl transition-colors ${isTeacher ? 'text-white' : 'text-gray-400 hover:text-white'}`}
+                        >
+                            <span className="text-xs uppercase tracking-wider font-semibold opacity-80">{isLogin ? 'Welcome Back' : 'Join As'}</span>
+                            <span className="text-xl font-bold">Teacher</span>
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setIsTeacher(false)}
+                            className={`flex-1 relative z-10 h-full flex flex-col items-center justify-center rounded-xl transition-colors ${!isTeacher ? 'text-white' : 'text-gray-400 hover:text-white'}`}
+                        >
+                            <span className="text-xs uppercase tracking-wider font-semibold opacity-80">{isLogin ? 'Welcome Back' : 'Join As'}</span>
+                            <span className="text-xl font-bold">Student</span>
+                        </button>
+                    </div>
 
-                    <form id="loginForm" onSubmit={handleSubmit} className="space-y-7 stagger-children">
+                    <form id="loginForm" onSubmit={handleSubmit} className="space-y-6 stagger-children">
                         {!isLogin && (
                             <div>
                                 <label className={`block text-sm font-medium mb-1.5 ${isDark ? 'text-slate-300' : 'text-gray-600'}`}>Full Name</label>
@@ -113,7 +140,7 @@ export default function LoginPage() {
                                         name="name"
                                         value={form.name}
                                         onChange={handleChange}
-                                        placeholder="Dr. John Smith"
+                                        placeholder={isTeacher ? "Dr. John Smith" : "Alex Doe"}
                                         className={`login-input login-input-animate ${!isDark ? 'login-input-light' : ''}`}
                                         required={!isLogin}
                                     />
@@ -121,7 +148,7 @@ export default function LoginPage() {
                             </div>
                         )}
 
-                        {!isLogin && (
+                        {!isLogin && isTeacher && (
                             <div>
                                 <label className={`block text-sm font-medium mb-1.5 ${isDark ? 'text-slate-300' : 'text-gray-600'}`}>Subject</label>
                                 <div className="relative">
@@ -133,7 +160,25 @@ export default function LoginPage() {
                                         onChange={handleChange}
                                         placeholder="e.g. Data Structures"
                                         className={`login-input login-input-animate ${!isDark ? 'login-input-light' : ''}`}
-                                        required={!isLogin}
+                                        required={!isLogin && isTeacher}
+                                    />
+                                </div>
+                            </div>
+                        )}
+
+                        {!isLogin && !isTeacher && (
+                            <div>
+                                <label className={`block text-sm font-medium mb-1.5 ${isDark ? 'text-slate-300' : 'text-gray-600'}`}>Class/Grade</label>
+                                <div className="relative">
+                                    <HiOutlineBookOpen className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-cyan-400" />
+                                    <input
+                                        type="text"
+                                        name="class"
+                                        value={form.class}
+                                        onChange={handleChange}
+                                        placeholder="e.g. Class 10 - Section A"
+                                        className={`login-input login-input-animate ${!isDark ? 'login-input-light' : ''}`}
+                                        required={!isLogin && !isTeacher}
                                     />
                                 </div>
                             </div>
@@ -148,7 +193,7 @@ export default function LoginPage() {
                                     name="email"
                                     value={form.email}
                                     onChange={handleChange}
-                                    placeholder="teacher@college.edu"
+                                    placeholder={isTeacher ? "teacher@college.edu" : "student@college.edu"}
                                     className={`login-input login-input-animate ${!isDark ? 'login-input-light' : ''}`}
                                     required
                                 />
@@ -185,7 +230,7 @@ export default function LoginPage() {
                             {loading ? (
                                 <div className="spinner !w-5 !h-5 !border-2" />
                             ) : (
-                                isLogin ? 'Sign In' : 'Create Account'
+                                isLogin ? (isTeacher ? 'Teacher Sign In' : 'Student Sign In') : 'Create Account'
                             )}
                         </button>
 
