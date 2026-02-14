@@ -1,9 +1,10 @@
+```python
 from fastapi import APIRouter, HTTPException, Depends, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from jose import JWTError, jwt
-from services.auth_service import auth_service, SECRET_KEY, ALGORITHM
+from services.auth_service import verify_password, create_access_token, get_password_hash, SECRET_KEY, ALGORITHM
 from services.supabase_service import supabase_service
-from models.schemas import UserRegister, UserLogin, Token, TokenData
+from models.schemas import UserRegister, UserLogin, Token, TokenData, StudentLoginRequest
 from typing import Optional
 from datetime import timedelta
 
@@ -34,7 +35,7 @@ async def register(user_data: UserRegister):
         if existing_user.data:
             raise HTTPException(status_code=400, detail="Email already registered")
         
-        hashed_password = auth_service.get_password_hash(user_data.password)
+        hashed_password = get_password_hash(user_data.password)
         
         new_user = {
             "name": user_data.name,
@@ -50,7 +51,7 @@ async def register(user_data: UserRegister):
             raise HTTPException(status_code=500, detail="Failed to create user in database")
         
         user = result.data[0]
-        access_token = auth_service.create_access_token(
+        access_token = create_access_token(
             data={"sub": str(user["id"]), "email": user["email"]}
         )
         return {"access_token": access_token, "token_type": "bearer"}
@@ -67,10 +68,30 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()):
         raise HTTPException(status_code=400, detail="Incorrect email or password")
     
     user = user_res.data[0]
-    if not auth_service.verify_password(form_data.password, user["password_hash"]):
+    if not verify_password(form_data.password, user["password_hash"]):
         raise HTTPException(status_code=400, detail="Incorrect email or password")
     
-    access_token = auth_service.create_access_token(
+    access_token = create_access_token(
         data={"sub": str(user["id"]), "email": user["email"]}
     )
     return {"access_token": access_token, "token_type": "bearer"}
+
+@router.post("/student-login", response_model=Token)
+async def student_login(request: StudentLoginRequest):
+    # Verify student exists in attendance or feedback table
+    # For MVP, broad check: does this name exist in our system?
+    res_att = supabase_service.get_client().table("attendance").select("student_name").ilike("student_name", request.student_name).limit(1).execute()
+    res_feed = supabase_service.get_client().table("feedback").select("student_name").ilike("student_name", request.student_name).limit(1).execute()
+    
+    if not res_att.data and not res_feed.data:
+        raise HTTPException(status_code=400, detail="Student name not found in records")
+        
+    # For MVP, we trust the name + fixed PIN.
+    # In production, we would check a stored hash.
+    if request.pin != "1234":
+         raise HTTPException(status_code=400, detail="Invalid PIN")
+
+    # Create token with STUDENT role
+    access_token = create_access_token(data={"sub": request.student_name, "role": "student"})
+    return {"access_token": access_token, "token_type": "bearer"}
+```

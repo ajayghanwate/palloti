@@ -9,14 +9,16 @@ from typing import Dict, Any
 router = APIRouter(prefix="/analytics", tags=["Analytics"])
 
 @router.post("/analyze-marks")
-async def analyze_marks(file: UploadFile = File(...), current_user: dict = Depends(get_current_user)) -> Dict[str, Any]:
+async def analyze_marks(file: UploadFile = File(...), topics_covered: str = "General", current_user: dict = Depends(get_current_user)) -> Dict[str, Any]:
     if not file.filename.endswith('.csv'):
         raise HTTPException(status_code=400, detail="Only CSV files are allowed")
     
     content = await file.read()
     try:
         avg_score, weak_topics, risk_students, summary = parser_service.parse_marks_csv(content)
-        ai_analysis = await ai_service.analyze_marks(summary)
+        # Add the context to the summary
+        full_context = f"{summary} Topics tested: {topics_covered}"
+        ai_analysis = await ai_service.analyze_marks(full_context)
         
         result = {
             "average_score": round(avg_score, 2),

@@ -114,5 +114,27 @@ async def detect_learning_gaps(request: LearningGapRequest, current_user: dict =
         analysis = await ai_service.detect_learning_gaps(marks_summary, topics)
         
         return analysis
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+@router.get("/my-feedback")
+async def get_my_feedback(current_user: dict = Depends(get_current_user)) -> Dict[str, Any]:
+    """Allows authenticated students to fetch their OWN feedback"""
+    if current_user["role"] != "student":
+         raise HTTPException(status_code=403, detail="This endpoint is for students only.")
+         
+    student_name = current_user["email"] # marking the name as 'email' in the token 'sub' field for simplicity
+    
+    try:
+        result = supabase_service.get_client().table("feedback").select("*").ilike("student_name", f"%{student_name}%").order("created_at", desc=True).limit(1).execute()
+        
+        if not result.data:
+            # Fallback: maybe the token name is slightly different?
+            raise HTTPException(status_code=404, detail=f"No feedback found for you ({student_name}). Please asking your teacher to generate it.")
+            
+        return result.data[0]["feedback_data"]
+    except HTTPException as e:
+        raise e
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

@@ -1,25 +1,20 @@
 -- 1. Enable necessary extensions
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
--- 2. Drop existing policies if they exist to avoid errors
+-- 2. Drop existing policies safely
 DO $$ 
+DECLARE
+    pol_record RECORD;
 BEGIN
-    -- Drop policies for marks_analysis
-    IF EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'Enable all for service role' AND polrelid = 'marks_analysis'::regclass) THEN
-        DROP POLICY "Enable all for service role" ON marks_analysis;
-    END IF;
-    -- Drop policies for syllabus_analysis
-    IF EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'Enable all for service role' AND polrelid = 'syllabus_analysis'::regclass) THEN
-        DROP POLICY "Enable all for service role" ON syllabus_analysis;
-    END IF;
-    -- Drop policies for assessments
-    IF EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'Enable all for service role' AND polrelid = 'assessments'::regclass) THEN
-        DROP POLICY "Enable all for service role" ON assessments;
-    END IF;
-    -- Drop policies for feedback
-    IF EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'Enable all for service role' AND polrelid = 'feedback'::regclass) THEN
-        DROP POLICY "Enable all for service role" ON feedback;
-    END IF;
+    FOR pol_record IN 
+        SELECT p.polname, c.relname
+        FROM pg_policy p
+        JOIN pg_class c ON p.polrelid = c.oid
+        WHERE p.polname = 'Enable all for service role'
+        AND c.relname IN ('marks_analysis', 'syllabus_analysis', 'assessments', 'feedback', 'study_materials', 'attendance')
+    LOOP
+        EXECUTE format('DROP POLICY %I ON %I', pol_record.polname, pol_record.relname);
+    END LOOP;
 END $$;
 
 -- 3. Create tables (with IF NOT EXISTS)

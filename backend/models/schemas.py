@@ -39,9 +39,13 @@ class UserRegister(BaseModel):
     password: str
     subject: Optional[str] = None
 
-class UserLogin(BaseModel):
+class LoginRequest(BaseModel):
     email: str
     password: str
+
+class StudentLoginRequest(BaseModel):
+    student_name: str
+    pin: str = "1234" # Default PIN for MVP
 
 class Token(BaseModel):
     access_token: str

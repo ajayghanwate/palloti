@@ -229,17 +229,18 @@ Return ONLY valid JSON in this exact format:
         Syllabus: {", ".join(syllabus_topics)}
         Performance Summary: {marks_summary}
         
-        Identify where students are failing to understand specific topics (Learning Gaps).
-        Provide a recovery plan.
+        Identify any topics students are struggling with (Learning Gaps).
+        If students are performing exceptionally well (e.g., above 85%), suggest enrichment activities or moving to advanced topics.
         
         Return JSON:
         {{
-            "detected_gaps": ["topic 1", "topic 2"],
-            "recovery_plan": "Specific teaching steps...",
-            "at_risk_topics": ["topic A"]
+            "detected_gaps": ["topic 1", "topic 2"] or [],
+            "pedagogical_advice": "Specific teaching steps or enrichment plan...",
+            "at_risk_topics": ["topic A"] or []
         }}
         """
         response = await self.generate_completion(prompt)
+        # Handle the field name change in response if needed, for simplicity kept as pedagogical_advice
         return json.loads(response)
 
 ai_service = AIService()
