@@ -1,12 +1,15 @@
 import { useState } from 'react';
 import QuizGeneratorForm from '../components/QuizGeneratorForm';
 import { assessmentService } from '../services/assessmentService';
+import { generateAssessmentFromPDF } from '../services/pdfAssessmentService';
 import toast from 'react-hot-toast';
-import { HiOutlineDocumentText, HiOutlineClipboardCopy, HiOutlineDownload } from 'react-icons/hi';
+import { HiOutlineDocumentText, HiOutlineClipboardCopy, HiOutlineDownload, HiOutlineUpload } from 'react-icons/hi';
 
 export default function AssessmentPage() {
     const [loading, setLoading] = useState(false);
     const [assessment, setAssessment] = useState(null);
+    const [mode, setMode] = useState('manual'); // 'manual' or 'pdf'
+    const [pdfFile, setPdfFile] = useState(null);
 
     const handleGenerate = async (formData) => {
         setLoading(true);
@@ -36,6 +39,38 @@ export default function AssessmentPage() {
             });
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handlePDFUpload = async (e) => {
+        e.preventDefault();
+        if (!pdfFile) {
+            toast.error('Please select a PDF file first');
+            return;
+        }
+
+        setLoading(true);
+        try {
+            const formData = new FormData();
+            formData.append('file', pdfFile);
+
+            const data = await generateAssessmentFromPDF(formData);
+            setAssessment(data);
+            toast.success('Assessment generated from PDF successfully!');
+        } catch (err) {
+            toast.error(err.response?.data?.detail || 'PDF generation failed');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleFileChange = (e) => {
+        const file = e.target.files[0];
+        if (file && file.type === 'application/pdf') {
+            setPdfFile(file);
+            toast.success('PDF file selected');
+        } else {
+            toast.error('Please select a valid PDF file');
         }
     };
 
@@ -91,14 +126,83 @@ export default function AssessmentPage() {
                 <p className="text-slate-400 text-sm mt-1">Generate tailored assessments aligned with Bloom's Taxonomy</p>
             </div>
 
-            {/* Form */}
-            <div className="glass-card p-6 animate-fade-in animate-fade-in-delay-1">
-                <h2 className="text-base font-semibold text-white mb-4 flex items-center gap-2">
-                    <HiOutlineDocumentText className="w-5 h-5 text-purple-400" />
-                    Assessment Configuration
-                </h2>
-                <QuizGeneratorForm onSubmit={handleGenerate} loading={loading} />
+            {/* Mode Tabs */}
+            <div className="glass-card p-2 animate-fade-in animate-fade-in-delay-1">
+                <div className="flex gap-2">
+                    <button
+                        onClick={() => setMode('manual')}
+                        className={`flex-1 py-2.5 px-4 rounded-lg text-sm font-medium transition-all duration-200 ${mode === 'manual'
+                                ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg'
+                                : 'text-slate-400 hover:text-white hover:bg-white/5'
+                            }`}
+                    >
+                        <HiOutlineDocumentText className="w-4 h-4 inline mr-2" />
+                        Manual Configuration
+                    </button>
+                    <button
+                        onClick={() => setMode('pdf')}
+                        className={`flex-1 py-2.5 px-4 rounded-lg text-sm font-medium transition-all duration-200 ${mode === 'pdf'
+                                ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg'
+                                : 'text-slate-400 hover:text-white hover:bg-white/5'
+                            }`}
+                    >
+                        <HiOutlineUpload className="w-4 h-4 inline mr-2" />
+                        Upload PDF
+                    </button>
+                </div>
             </div>
+
+            {/* Form - Conditional based on mode */}
+            {mode === 'manual' ? (
+                <div className="glass-card p-6 animate-fade-in">
+                    <h2 className="text-base font-semibold text-white mb-4 flex items-center gap-2">
+                        <HiOutlineDocumentText className="w-5 h-5 text-purple-400" />
+                        Assessment Configuration
+                    </h2>
+                    <QuizGeneratorForm onSubmit={handleGenerate} loading={loading} />
+                </div>
+            ) : (
+                <div className="glass-card p-6 animate-fade-in">
+                    <h2 className="text-base font-semibold text-white mb-4 flex items-center gap-2">
+                        <HiOutlineUpload className="w-5 h-5 text-blue-400" />
+                        Upload PDF Document
+                    </h2>
+                    <form onSubmit={handlePDFUpload} className="space-y-4">
+                        <div>
+                            <label className="block text-sm font-medium text-slate-300 mb-2">
+                                Select PDF File
+                            </label>
+                            <div className="relative">
+                                <input
+                                    type="file"
+                                    accept=".pdf"
+                                    onChange={handleFileChange}
+                                    className="block w-full text-sm text-slate-400 file:mr-4 file:py-2.5 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-blue-500/10 file:text-blue-400 hover:file:bg-blue-500/20 file:cursor-pointer cursor-pointer border border-white/10 rounded-lg bg-white/5 p-2"
+                                />
+                            </div>
+                            {pdfFile && (
+                                <p className="text-xs text-emerald-400 mt-2 flex items-center gap-1">
+                                    ✓ {pdfFile.name} ({(pdfFile.size / 1024).toFixed(1)} KB)
+                                </p>
+                            )}
+                        </div>
+                        <button
+                            type="submit"
+                            disabled={loading || !pdfFile}
+                            className="btn-gradient w-full justify-center py-3"
+                        >
+                            {loading ? (
+                                <div className="spinner !w-5 !h-5 !border-2" />
+                            ) : (
+                                <>
+                                    <HiOutlineUpload className="w-4 h-4" />
+                                    Generate from PDF
+                                </>
+                            )}
+                        </button>
+                    </form>
+                </div>
+            )}
 
             {/* Generated Assessment */}
             {assessment && (
@@ -142,8 +246,8 @@ export default function AssessmentPage() {
                                                 <div
                                                     key={oIdx}
                                                     className={`p-2.5 rounded-lg text-xs border transition-colors ${opt === q.answer
-                                                            ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
-                                                            : 'bg-white/[0.02] border-white/5 text-slate-400'
+                                                        ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
+                                                        : 'bg-white/[0.02] border-white/5 text-slate-400'
                                                         }`}
                                                 >
                                                     <span className="font-semibold mr-2">{String.fromCharCode(65 + oIdx)}.</span>

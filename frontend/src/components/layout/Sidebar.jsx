@@ -8,6 +8,7 @@ import {
     HiOutlinePresentationChartLine,
     HiOutlineAcademicCap,
     HiOutlineX,
+    HiOutlineUpload,
 } from 'react-icons/hi';
 
 const navItems = [
@@ -15,6 +16,7 @@ const navItems = [
     { path: '/attendance', label: 'Attendance & Marks', icon: HiOutlineClipboardCheck },
     { path: '/assessment', label: 'Assessment Generator', icon: HiOutlineDocumentText },
     { path: '/learning-gap', label: 'Learning Gap Analysis', icon: HiOutlineLightBulb },
+    { path: '/materials', label: 'Study Materials', icon: HiOutlineUpload },
     { path: '/reports', label: 'Performance Reports', icon: HiOutlineChartBar },
     { path: '/engagement', label: 'Engagement Analytics', icon: HiOutlinePresentationChartLine },
 ];
