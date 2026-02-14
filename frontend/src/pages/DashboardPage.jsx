@@ -30,19 +30,23 @@ const recentActivities = [
 
 export default function DashboardPage() {
     const { user } = useAuth();
+    const greeting = new Date().getHours() < 12 ? 'Morning' : new Date().getHours() < 17 ? 'Afternoon' : 'Evening';
+    const userName = user?.name?.split(' ')[0] || 'Teacher';
 
     return (
-        <div className="space-y-8 max-w-7xl mx-auto">
+        <div className="dashboard-container">
             {/* Welcome Banner */}
-            <div className="glass-card p-6 md:p-8 bg-gradient-to-r from-blue-500/10 via-purple-500/5 to-transparent border-blue-500/10 animate-fade-in">
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="dashboard-welcome-banner">
+                <div className="welcome-content">
                     <div>
-                        <h1 className="text-2xl md:text-3xl font-bold text-white">
-                            Good {new Date().getHours() < 12 ? 'Morning' : new Date().getHours() < 17 ? 'Afternoon' : 'Evening'}, {user?.name?.split(' ')[0] || 'Teacher'} 👋
+                        <h1 className="welcome-heading">
+                            Good {greeting}, {userName} 👋
                         </h1>
-                        <p className="text-slate-400 mt-1">Here's your teaching intelligence overview for today.</p>
+                        <p className="welcome-subtitle">
+                            Here's your teaching intelligence overview for today.
+                        </p>
                     </div>
-                    <Link to="/assessment" className="btn-gradient">
+                    <Link to="/assessment" className="quick-assessment-btn">
                         <HiOutlineDocumentText className="w-5 h-5" />
                         Quick Assessment
                     </Link>
@@ -50,7 +54,7 @@ export default function DashboardPage() {
             </div>
 
             {/* Stats Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 animate-fade-in animate-fade-in-delay-1">
+            <div className="stats-grid">
                 <StatsCard icon={HiOutlineUserGroup} label="Total Students" value="156" change="+12" color="blue" />
                 <StatsCard icon={HiOutlineChartBar} label="Avg Score" value="72%" change="+3%" color="emerald" />
                 <StatsCard icon={HiOutlineExclamationCircle} label="At-Risk Students" value="8" change="-2" color="rose" />
@@ -58,26 +62,26 @@ export default function DashboardPage() {
             </div>
 
             {/* Quick Actions + Recent Activity */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="dashboard-main-grid">
                 {/* Quick Actions */}
-                <div className="lg:col-span-2 animate-fade-in animate-fade-in-delay-2">
-                    <h2 className="text-lg font-semibold text-white mb-4">Quick Actions</h2>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="quick-actions-section">
+                    <h2 className="section-heading">Quick Actions</h2>
+                    <div className="quick-actions-grid">
                         {quickActions.map((action) => (
                             <Link
                                 key={action.path}
                                 to={action.path}
-                                className="glass-card p-4 group hover:border-blue-500/20 transition-all duration-300"
+                                className="quick-action-card"
                             >
-                                <div className="flex items-start gap-4">
-                                    <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${action.color} flex items-center justify-center flex-shrink-0`}>
+                                <div className="quick-action-content">
+                                    <div className={`quick-action-icon bg-gradient-to-br ${action.color}`}>
                                         <action.icon className="w-5 h-5 text-white" />
                                     </div>
-                                    <div className="flex-1 min-w-0">
-                                        <h3 className="text-sm font-semibold text-white group-hover:text-blue-400 transition-colors">{action.label}</h3>
-                                        <p className="text-xs text-slate-500 mt-0.5">{action.desc}</p>
+                                    <div className="quick-action-text">
+                                        <h3 className="quick-action-title">{action.label}</h3>
+                                        <p className="quick-action-desc">{action.desc}</p>
                                     </div>
-                                    <HiOutlineArrowRight className="w-4 h-4 text-slate-600 group-hover:text-blue-400 group-hover:translate-x-1 transition-all mt-1" />
+                                    <HiOutlineArrowRight className="quick-action-arrow" />
                                 </div>
                             </Link>
                         ))}
@@ -85,17 +89,17 @@ export default function DashboardPage() {
                 </div>
 
                 {/* Recent Activity */}
-                <div className="animate-fade-in animate-fade-in-delay-3">
-                    <h2 className="text-lg font-semibold text-white mb-4">Recent Activity</h2>
-                    <div className="glass-card p-4 space-y-4">
+                <div className="recent-activity-section">
+                    <h2 className="section-heading">Recent Activity</h2>
+                    <div className="activity-card">
                         {recentActivities.map((activity, idx) => (
-                            <div key={idx} className="flex items-start gap-3">
-                                <div className={`w-2 h-2 rounded-full ${activity.color} mt-1.5 flex-shrink-0`} />
-                                <div className="flex-1 min-w-0">
-                                    <p className="text-sm text-white font-medium">{activity.action}</p>
-                                    <p className="text-xs text-slate-500 truncate">{activity.detail}</p>
+                            <div key={idx} className="activity-item">
+                                <div className={`activity-dot ${activity.color}`} />
+                                <div className="activity-content">
+                                    <p className="activity-action">{activity.action}</p>
+                                    <p className="activity-detail">{activity.detail}</p>
                                 </div>
-                                <span className="text-xs text-slate-600 flex-shrink-0">{activity.time}</span>
+                                <span className="activity-time">{activity.time}</span>
                             </div>
                         ))}
                     </div>
@@ -103,15 +107,15 @@ export default function DashboardPage() {
             </div>
 
             {/* AI Insight Banner */}
-            <div className="glass-card p-5 border-purple-500/20 bg-gradient-to-r from-purple-500/5 to-transparent animate-fade-in animate-fade-in-delay-4">
-                <div className="flex items-start gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-purple-500/20 flex items-center justify-center flex-shrink-0">
+            <div className="ai-insight-banner">
+                <div className="ai-insight-content">
+                    <div className="ai-insight-icon">
                         <HiOutlineLightBulb className="w-5 h-5 text-purple-400" />
                     </div>
-                    <div>
-                        <h3 className="text-sm font-semibold text-purple-300">AI Insight</h3>
-                        <p className="text-sm text-slate-400 mt-1">
-                            Based on recent analysis, <span className="text-white font-medium">Unit 3 — Recursion</span> shows the highest
+                    <div className="ai-insight-text">
+                        <h3 className="ai-insight-title">AI Insight</h3>
+                        <p className="ai-insight-description">
+                            Based on recent analysis, <span className="highlight">Unit 3 — Recursion</span> shows the highest
                             learning gap. Consider a revision session or targeted assessment before the mid-term exam.
                         </p>
                     </div>

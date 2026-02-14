@@ -20,44 +20,44 @@ export default function QuizGeneratorForm({ onSubmit, loading }) {
     };
 
     return (
-        <form onSubmit={handleSubmit} className="space-y-5">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+        <form onSubmit={handleSubmit} className="assessment-form">
+            <div className="assessment-form-grid">
                 {/* Subject */}
-                <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-2">Subject</label>
+                <div className="form-field">
+                    <label className="form-label">Subject</label>
                     <input
                         type="text"
                         name="subject"
                         value={formData.subject}
                         onChange={handleChange}
                         placeholder="e.g. Data Structures"
-                        className="input-field"
+                        className="form-input"
                         required
                     />
                 </div>
 
                 {/* Unit / Chapter */}
-                <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-2">Unit / Chapter</label>
+                <div className="form-field">
+                    <label className="form-label">Unit / Chapter</label>
                     <input
                         type="text"
                         name="unit"
                         value={formData.unit}
                         onChange={handleChange}
                         placeholder="e.g. Trees and Graphs"
-                        className="input-field"
+                        className="form-input"
                         required
                     />
                 </div>
 
                 {/* Difficulty */}
-                <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-2">Difficulty Level</label>
+                <div className="form-field">
+                    <label className="form-label">Difficulty Level</label>
                     <select
                         name="difficulty"
                         value={formData.difficulty}
                         onChange={handleChange}
-                        className="select-field"
+                        className="form-select"
                     >
                         <option value="easy">Easy</option>
                         <option value="medium">Medium</option>
@@ -66,8 +66,8 @@ export default function QuizGeneratorForm({ onSubmit, loading }) {
                 </div>
 
                 {/* Number of Questions */}
-                <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-2">Number of Questions</label>
+                <div className="form-field">
+                    <label className="form-label">Number of Questions</label>
                     <input
                         type="number"
                         name="num_questions"
@@ -75,7 +75,7 @@ export default function QuizGeneratorForm({ onSubmit, loading }) {
                         onChange={handleChange}
                         min="1"
                         max="50"
-                        className="input-field"
+                        className="form-input"
                         required
                     />
                 </div>
@@ -84,7 +84,7 @@ export default function QuizGeneratorForm({ onSubmit, loading }) {
             <button
                 type="submit"
                 disabled={loading || !formData.subject || !formData.unit}
-                className="btn-gradient w-full justify-center py-3 text-base"
+                className="generate-assessment-btn"
             >
                 {loading ? (
                     <>
