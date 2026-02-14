@@ -77,4 +77,28 @@ class ParserService:
         
         return text
 
+    def parse_attendance_csv(self, file_content: bytes) -> List[Dict[str, Any]]:
+        """Parses attendance CSV expecting columns related to name, date, and status."""
+        df = pd.read_csv(io.BytesIO(file_content))
+        
+        # Standardize columns
+        df.columns = [c.lower().strip().replace(' ', '_') for c in df.columns]
+        
+        # Find required columns
+        name_col = next((c for c in df.columns if 'name' in c), None)
+        date_col = next((c for c in df.columns if 'date' in c), None)
+        status_col = next((c for c in df.columns if 'status' in c or 'presence' in c), None)
+        
+        if not name_col or not date_col or not status_col:
+            raise ValueError("Attendance CSV must have name, date, and status columns")
+            
+        records = []
+        for _, row in df.iterrows():
+            records.append({
+                "student_name": str(row[name_col]),
+                "attendance_date": str(row[date_col]),
+                "status": "Present" if str(row[status_col]).lower() in ['p', 'present', '1', 'yes'] else "Absent"
+            })
+        return records
+
 parser_service = ParserService()

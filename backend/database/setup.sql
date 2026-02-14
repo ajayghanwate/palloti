@@ -80,12 +80,24 @@ CREATE TABLE IF NOT EXISTS study_materials (
     word_count INTEGER
 );
 
+-- Table for storing attendance records
+CREATE TABLE IF NOT EXISTS attendance (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    teacher_id UUID REFERENCES teachers(id),
+    created_at TIMESTAMPTZ DEFAULT now(),
+    student_name TEXT NOT NULL,
+    attendance_date DATE NOT NULL,
+    status TEXT CHECK (status IN ('Present', 'Absent', 'Late')),
+    subject TEXT
+);
+
 -- 4. Ensure RLS is enabled
 ALTER TABLE marks_analysis ENABLE ROW LEVEL SECURITY;
 ALTER TABLE syllabus_analysis ENABLE ROW LEVEL SECURITY;
 ALTER TABLE assessments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE feedback ENABLE ROW LEVEL SECURITY;
 ALTER TABLE study_materials ENABLE ROW LEVEL SECURITY;
+ALTER TABLE attendance ENABLE ROW LEVEL SECURITY;
 
 -- 5. Re-create policies
 CREATE POLICY "Enable all for service role" ON marks_analysis USING (true) WITH CHECK (true);
@@ -93,3 +105,4 @@ CREATE POLICY "Enable all for service role" ON syllabus_analysis USING (true) WI
 CREATE POLICY "Enable all for service role" ON assessments USING (true) WITH CHECK (true);
 CREATE POLICY "Enable all for service role" ON feedback USING (true) WITH CHECK (true);
 CREATE POLICY "Enable all for service role" ON study_materials USING (true) WITH CHECK (true);
+CREATE POLICY "Enable all for service role" ON attendance USING (true) WITH CHECK (true);

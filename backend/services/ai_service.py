@@ -203,4 +203,43 @@ Return ONLY valid JSON in this exact format:
         response = await self.generate_completion(prompt)
         return json.loads(response)
 
+    async def analyze_attendance(self, attendance_summary: str) -> Dict[str, Any]:
+        prompt = f"""
+        Analyze this student attendance summary:
+        {attendance_summary}
+        
+        Identify:
+        1. Students with worrying attendance trends
+        2. Impact on class engagement
+        3. Simple suggestions for the teacher
+        
+        Return JSON:
+        {{
+            "risk_analysis": "...",
+            "engagement_score": 0-100,
+            "suggestions": [...]
+        }}
+        """
+        response = await self.generate_completion(prompt)
+        return json.loads(response)
+
+    async def detect_learning_gaps(self, marks_summary: str, syllabus_topics: List[str]) -> Dict[str, Any]:
+        prompt = f"""
+        Compare student performance with syllabus topics:
+        Syllabus: {", ".join(syllabus_topics)}
+        Performance Summary: {marks_summary}
+        
+        Identify where students are failing to understand specific topics (Learning Gaps).
+        Provide a recovery plan.
+        
+        Return JSON:
+        {{
+            "detected_gaps": ["topic 1", "topic 2"],
+            "recovery_plan": "Specific teaching steps...",
+            "at_risk_topics": ["topic A"]
+        }}
+        """
+        response = await self.generate_completion(prompt)
+        return json.loads(response)
+
 ai_service = AIService()

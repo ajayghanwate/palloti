@@ -50,3 +50,11 @@ class Token(BaseModel):
 class TokenData(BaseModel):
     email: Optional[str] = None
     user_id: Optional[str] = None
+
+class LearningGapRequest(BaseModel):
+    subject: str
+
+class LearningGapResponse(BaseModel):
+    detected_gaps: List[str]
+    recovery_plan: str
+    at_risk_topics: List[str]
