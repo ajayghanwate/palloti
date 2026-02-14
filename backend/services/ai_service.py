@@ -223,6 +223,51 @@ Return ONLY valid JSON in this exact format:
         response = await self.generate_completion(prompt)
         return json.loads(response)
 
+    async def analyze_lecture(self, transcript: str) -> Dict[str, Any]:
+        """
+        Analyze a raw lecture transcript and return structured notes.
+        """
+        prompt = f"""
+        You are an expert academic scribe. Analyze the following lecture transcript and extract structured notes.
+        
+        Transcript:
+        {transcript[:10000]} # Truncate to stay within Llama 3 token limits if needed
+        
+        Extract:
+        1. A concise, professional Lecture Title.
+        2. "summary": A high-level overview of the entire lecture.
+        3. "topics": A list of the main topics discussed (maximum 5).
+        4. "concepts": A list of the key concepts introduced.
+        5. "formulas": A list of ALL mathematical formulas, equations, or expressions mentioned. Write them in plain text format (e.g., "x = (-b ± √(b² - 4ac)) / 2a").
+        6. "definitions": A dictionary where keys are terms and values are their definitions.
+        7. "examples": A list of real-world examples or analogies used by the teacher.
+        
+        Return valid JSON in this exact format:
+        {{
+            "title": "...",
+            "summary": "...",
+            "topics": ["...", "..."],
+            "concepts": ["...", "..."],
+            "formulas": ["x = (-b ± √(b² - 4ac)) / 2a", "a² + b² = c²"],
+            "definitions": {{ "term": "definition" }},
+            "examples": ["...", "..."]
+        }}
+        """
+        try:
+            response = await self.generate_completion(prompt, system_prompt="You are an expert academic analyst. Return only valid JSON.")
+            return json.loads(response)
+        except Exception:
+            # Fallback structure if AI fails
+            return {
+                "title": "Lecture Notes",
+                "summary": "AI summary failed. Please review the raw transcript.",
+                "topics": [],
+                "concepts": [],
+                "formulas": [],
+                "definitions": {},
+                "examples": []
+            }
+
     async def detect_learning_gaps(self, marks_summary: str, syllabus_topics: List[str]) -> Dict[str, Any]:
         prompt = f"""
         Compare student performance with syllabus topics:
