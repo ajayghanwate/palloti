@@ -119,34 +119,28 @@ export default function AssessmentPage() {
     };
 
     return (
-        <div className="space-y-6 max-w-5xl mx-auto">
+        <div className="assessment-page-container">
             {/* Header */}
-            <div className="animate-fade-in">
-                <h1 className="text-2xl font-bold text-white">AI Assessment Generator</h1>
-                <p className="text-slate-400 text-sm mt-1">Generate tailored assessments aligned with Bloom's Taxonomy</p>
+            <div className="assessment-page-header">
+                <h1 className="assessment-page-title">AI Assessment Generator</h1>
+                <p className="assessment-page-subtitle">Generate tailored assessments aligned with Bloom's Taxonomy</p>
             </div>
 
-            {/* Mode Tabs */}
-            <div className="glass-card p-2 animate-fade-in animate-fade-in-delay-1">
-                <div className="flex gap-2">
+            {/* Mode Tabs - Segmented Control */}
+            <div className="assessment-tabs-wrapper">
+                <div className="assessment-tabs">
                     <button
                         onClick={() => setMode('manual')}
-                        className={`flex-1 py-2.5 px-4 rounded-lg text-sm font-medium transition-all duration-200 ${mode === 'manual'
-                                ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg'
-                                : 'text-slate-400 hover:text-white hover:bg-white/5'
-                            }`}
+                        className={`assessment-tab ${mode === 'manual' ? 'active' : ''}`}
                     >
-                        <HiOutlineDocumentText className="w-4 h-4 inline mr-2" />
+                        <HiOutlineDocumentText className="w-4 h-4" />
                         Manual Configuration
                     </button>
                     <button
                         onClick={() => setMode('pdf')}
-                        className={`flex-1 py-2.5 px-4 rounded-lg text-sm font-medium transition-all duration-200 ${mode === 'pdf'
-                                ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg'
-                                : 'text-slate-400 hover:text-white hover:bg-white/5'
-                            }`}
+                        className={`assessment-tab ${mode === 'pdf' ? 'active' : ''}`}
                     >
-                        <HiOutlineUpload className="w-4 h-4 inline mr-2" />
+                        <HiOutlineUpload className="w-4 h-4" />
                         Upload PDF
                     </button>
                 </div>

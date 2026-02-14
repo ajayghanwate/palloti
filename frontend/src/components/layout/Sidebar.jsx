@@ -32,33 +32,25 @@ export default function Sidebar({ isOpen, onClose }) {
                 />
             )}
 
-            <aside
-                className={`
-          fixed top-0 left-0 h-full z-50 
-          w-[280px] bg-[#0F172A] border-r border-white/10
-          flex flex-col transition-transform duration-300
-          lg:translate-x-0 lg:static lg:z-auto
-          ${isOpen ? 'translate-x-0' : '-translate-x-full'}
-        `}
-            >
+            <aside className="sidebar-container">
                 {/* Logo */}
-                <div className="flex items-center justify-between p-6 border-b border-white/5">
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+                <div className="sidebar-header">
+                    <div className="sidebar-logo-wrapper">
+                        <div className="sidebar-logo-icon">
                             <HiOutlineAcademicCap className="w-6 h-6 text-white" />
                         </div>
-                        <div>
-                            <h1 className="text-lg font-bold text-white tracking-tight">MentorAI</h1>
-                            <p className="text-[10px] text-slate-500 uppercase tracking-widest">Teaching Co-Pilot</p>
+                        <div className="sidebar-logo-text">
+                            <h1 className="sidebar-logo-title">MentorAI</h1>
+                            <p className="sidebar-logo-subtitle">TEACHING CO-PILOT</p>
                         </div>
                     </div>
-                    <button onClick={onClose} className="lg:hidden text-slate-400 hover:text-white">
+                    <button onClick={onClose} className="sidebar-close-btn lg:hidden">
                         <HiOutlineX className="w-5 h-5" />
                     </button>
                 </div>
 
                 {/* Navigation */}
-                <nav className="flex-1 py-4 pl-12 pr-3 space-y-1 overflow-y-auto">
+                <nav className="sidebar-nav">
                     {navItems.map((item) => (
                         <NavLink
                             key={item.path}
@@ -66,24 +58,20 @@ export default function Sidebar({ isOpen, onClose }) {
                             end={item.path === '/'}
                             onClick={onClose}
                             className={({ isActive }) =>
-                                `flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200
-                ${isActive
-                                    ? 'bg-gradient-to-r from-blue-500/20 to-purple-500/10 text-blue-400 border border-blue-500/20'
-                                    : 'text-slate-400 hover:text-white hover:bg-white/5'
-                                }`
+                                `sidebar-nav-link ${isActive ? 'active' : ''}`
                             }
                         >
-                            <item.icon className="w-5 h-5 flex-shrink-0" />
-                            {item.label}
+                            <item.icon className="sidebar-nav-icon" />
+                            <span className="sidebar-nav-label">{item.label}</span>
                         </NavLink>
                     ))}
                 </nav>
 
                 {/* Footer */}
-                <div className="p-4 border-t border-white/5">
-                    <div className="glass-card p-4 text-center">
-                        <p className="text-xs text-slate-500">Powered by</p>
-                        <p className="text-sm font-semibold gradient-text">Groq AI Engine</p>
+                <div className="sidebar-footer">
+                    <div className="sidebar-footer-card">
+                        <p className="sidebar-footer-text">Powered by</p>
+                        <p className="sidebar-footer-brand">Groq AI Engine</p>
                     </div>
                 </div>
             </aside>

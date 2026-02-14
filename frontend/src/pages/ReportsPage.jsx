@@ -54,51 +54,117 @@ export default function ReportsPage() {
     };
 
     return (
-        <div className="space-y-6 max-w-5xl mx-auto">
-            <div className="animate-fade-in">
-                <h1 className="text-2xl font-bold text-white">Performance Reports</h1>
-                <p className="text-slate-400 text-sm mt-1">Generate AI-powered personalized feedback and improvement plans</p>
+        <div className="reports-page-container">
+            {/* Header */}
+            <div className="reports-page-header">
+                <h1 className="reports-page-title">Performance Reports</h1>
+                <p className="reports-page-subtitle">Generate AI-powered personalized feedback and improvement plans</p>
             </div>
 
-            <div className="glass-card p-6 animate-fade-in animate-fade-in-delay-1">
-                <h2 className="text-base font-semibold text-white mb-4 flex items-center gap-2">
-                    <HiOutlineUser className="w-5 h-5 text-emerald-400" /> Student Information
+            {/* Student Information Card */}
+            <div className="student-info-card">
+                <h2 className="student-info-title">
+                    <HiOutlineUser className="w-5 h-5 text-emerald-400" />
+                    Student Information
                 </h2>
-                <form onSubmit={handleGenerate} className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-sm font-medium text-slate-300 mb-2">Student Name</label>
-                            <input type="text" name="student_name" value={form.student_name} onChange={handleChange} placeholder="e.g. Rahul Sharma" className="input-field" required />
+                <form onSubmit={handleGenerate} className="student-info-form">
+                    {/* Name and Score Grid */}
+                    <div className="student-info-grid">
+                        <div className="form-field">
+                            <label className="form-label">Student Name</label>
+                            <input
+                                type="text"
+                                name="student_name"
+                                value={form.student_name}
+                                onChange={handleChange}
+                                placeholder="e.g. Rahul Sharma"
+                                className="form-input"
+                                required
+                            />
                         </div>
-                        <div>
-                            <label className="block text-sm font-medium text-slate-300 mb-2">Score (%)</label>
-                            <input type="number" name="score" value={form.score} onChange={handleChange} placeholder="e.g. 72" min="0" max="100" className="input-field" required />
+                        <div className="form-field">
+                            <label className="form-label">Score (%)</label>
+                            <input
+                                type="number"
+                                name="score"
+                                value={form.score}
+                                onChange={handleChange}
+                                placeholder="e.g. 72"
+                                min="0"
+                                max="100"
+                                className="form-input"
+                                required
+                            />
                         </div>
                     </div>
-                    <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-2">Weak Topics</label>
-                        <div className="flex gap-2">
-                            <input type="text" value={topicInput} onChange={(e) => setTopicInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addTopic())} placeholder="Type topic, press Enter" className="input-field flex-1" />
-                            <button type="button" onClick={addTopic} className="btn-secondary px-4"><HiOutlinePlus className="w-4 h-4" /></button>
+
+                    {/* Weak Topics Section */}
+                    <div className="weak-topics-section">
+                        <label className="form-label">Weak Topics</label>
+                        <div className="topic-input-wrapper">
+                            <input
+                                type="text"
+                                value={topicInput}
+                                onChange={(e) => setTopicInput(e.target.value)}
+                                onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addTopic())}
+                                placeholder="Type topic and press Enter"
+                                className="topic-input"
+                            />
+                            <button
+                                type="button"
+                                onClick={addTopic}
+                                className="add-topic-btn"
+                            >
+                                <HiOutlinePlus className="w-4 h-4" />
+                                Add Topic
+                            </button>
                         </div>
                         {form.weak_topics.length > 0 && (
-                            <div className="flex flex-wrap gap-2 mt-3">
+                            <div className="topics-list">
                                 {form.weak_topics.map((t) => (
-                                    <span key={t} className="badge badge-amber flex items-center gap-1.5">
-                                        <HiOutlineTag className="w-3 h-3" />{t}
-                                        <button onClick={() => removeTopic(t)} className="hover:text-rose-400"><HiOutlineX className="w-3 h-3" /></button>
+                                    <span key={t} className="topic-tag">
+                                        <HiOutlineTag className="w-3.5 h-3.5" />
+                                        {t}
+                                        <button
+                                            type="button"
+                                            onClick={() => removeTopic(t)}
+                                            className="topic-remove-btn"
+                                        >
+                                            <HiOutlineX className="w-3.5 h-3.5" />
+                                        </button>
                                     </span>
                                 ))}
                             </div>
                         )}
                     </div>
-                    <button type="submit" disabled={loading} className="btn-gradient w-full justify-center py-3 text-base">
-                        {loading ? <><div className="spinner !w-5 !h-5 !border-2" /> Generating...</> : <><HiOutlineChartBar className="w-5 h-5" /> Generate AI Feedback</>}
+
+                    {/* Generate Button */}
+                    <button
+                        type="submit"
+                        disabled={loading}
+                        className="generate-feedback-btn"
+                    >
+                        {loading ? (
+                            <>
+                                <div className="spinner !w-5 !h-5 !border-2" />
+                                Generating...
+                            </>
+                        ) : (
+                            <>
+                                <HiOutlineChartBar className="w-5 h-5" />
+                                Generate AI Feedback
+                            </>
+                        )}
                     </button>
                 </form>
             </div>
 
-            {report && <div className="animate-fade-in"><ReportViewer report={report} onDownload={handleDownload} /></div>}
+            {/* Report Viewer */}
+            {report && (
+                <div className="report-viewer-wrapper">
+                    <ReportViewer report={report} onDownload={handleDownload} />
+                </div>
+            )}
         </div>
     );
 }
