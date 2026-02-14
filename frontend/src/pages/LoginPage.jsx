@@ -32,11 +32,14 @@ export default function LoginPage() {
             toast.success(isLogin ? 'Welcome back!' : 'Account created successfully!');
             navigate('/');
         } catch (err) {
-            toast.error(err.response?.data?.detail || 'Authentication failed. Try demo mode.');
+            // This should rarely happen now since AuthContext handles failures
+            console.error('Unexpected error:', err);
+            toast.error('An unexpected error occurred. Please try again.');
         } finally {
             setLoading(false);
         }
     };
+
 
     const handleDemoLogin = () => {
         demoLogin();

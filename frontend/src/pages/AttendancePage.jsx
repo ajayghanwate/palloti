@@ -51,16 +51,16 @@ export default function AttendancePage() {
     };
 
     return (
-        <div className="space-y-6 max-w-7xl mx-auto">
+        <div className="attendance-page-container">
             {/* Header */}
-            <div className="animate-fade-in">
-                <h1 className="text-2xl font-bold text-white">Attendance & Marks Analysis</h1>
-                <p className="text-slate-400 text-sm mt-1">Upload student marks CSV to get AI-powered insights and teaching strategies</p>
+            <div className="attendance-page-header">
+                <h1 className="attendance-page-title">Attendance & Marks Analysis</h1>
+                <p className="attendance-page-subtitle">Upload student marks CSV to get AI-powered insights and teaching strategies</p>
             </div>
 
             {/* Upload Section */}
-            <div className="glass-card p-6 animate-fade-in animate-fade-in-delay-1">
-                <h2 className="text-base font-semibold text-white mb-4 flex items-center gap-2">
+            <div className="upload-marks-card">
+                <h2 className="upload-marks-title">
                     <HiOutlineUpload className="w-5 h-5 text-blue-400" />
                     Upload Student Marks
                 </h2>
@@ -74,16 +74,16 @@ export default function AttendancePage() {
                 <button
                     onClick={handleAnalyze}
                     disabled={!file || loading}
-                    className="btn-gradient mt-4"
+                    className="analyze-marks-btn"
                 >
                     {loading ? (
                         <>
-                            <div className="spinner !w-4 !h-4 !border-2" />
+                            <div className="spinner !w-5 !h-5 !border-2" />
                             Analyzing with AI...
                         </>
                     ) : (
                         <>
-                            <HiOutlineChartBar className="w-4 h-4" />
+                            <HiOutlineChartBar className="w-5 h-5" />
                             Analyze Marks
                         </>
                     )}
