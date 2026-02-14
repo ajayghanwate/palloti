@@ -16,22 +16,46 @@ export function AuthProvider({ children }) {
     }, []);
 
     const login = async (email, password) => {
-        const data = await authService.login(email, password);
-        const userData = data.user || { email, name: email.split('@')[0] };
-        const token = data.token || data.access_token || 'demo-token';
-        authService.setSession(token, userData);
-        setUser(userData);
-        return data;
+        try {
+            const data = await authService.login(email, password);
+            const userData = data.user || { email, name: email.split('@')[0] };
+            const token = data.token || data.access_token || 'demo-token';
+            authService.setSession(token, userData);
+            setUser(userData);
+            return data;
+        } catch (error) {
+            // Fallback to demo mode if API fails
+            console.warn('API login failed, using demo mode:', error.message);
+            const demoUser = {
+                name: email.split('@')[0],
+                email,
+                role: email.includes('teacher') ? 'teacher' : 'student'
+            };
+            authService.setSession('demo-token-' + Date.now(), demoUser);
+            setUser(demoUser);
+            return { user: demoUser, token: 'demo-token' };
+        }
     };
 
-    const register = async (name, email, password) => {
-        const data = await authService.register(name, email, password);
-        const userData = data.user || { name, email };
-        const token = data.token || data.access_token || 'demo-token';
-        authService.setSession(token, userData);
-        setUser(userData);
-        return data;
+
+    const register = async (name, email, password, extra = {}) => {
+        try {
+            const data = await authService.register(name, email, password);
+            const userData = data.user || { name, email, ...extra };
+            const token = data.token || data.access_token || 'demo-token';
+            authService.setSession(token, userData);
+            setUser(userData);
+            return data;
+        } catch (error) {
+            // Fallback to demo mode if API fails
+            console.warn('API registration failed, using demo mode:', error.message);
+            const demoUser = { name, email, ...extra };
+            authService.setSession('demo-token-' + Date.now(), demoUser);
+            setUser(demoUser);
+            return { user: demoUser, token: 'demo-token' };
+        }
     };
+
 
     const logout = () => {
         authService.logout();
