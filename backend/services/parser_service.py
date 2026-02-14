@@ -36,40 +36,45 @@ class ParserService:
 
     def parse_syllabus_pdf(self, file_content: bytes) -> str:
         """
-        Extract text from PDF with multiple strategies for better content extraction
+        Extract text from PDF using multiple libraries and strategies.
         """
         text = ""
+        # Strategy 1: pdfplumber (Better for layout and tables)
         try:
             with pdfplumber.open(io.BytesIO(file_content)) as pdf:
                 for page_num, page in enumerate(pdf.pages, 1):
-                    # Try multiple extraction strategies
                     page_text = page.extract_text()
-                    
-                    # If extract_text() returns very little, try with layout preservation
                     if not page_text or len(page_text.strip()) < 50:
                         page_text = page.extract_text(layout=True)
                     
-                    # If still minimal, try extracting from tables
-                    if not page_text or len(page_text.strip()) < 50:
-                        tables = page.extract_tables()
-                        if tables:
-                            for table in tables:
-                                for row in table:
-                                    page_text += " ".join([str(cell) for cell in row if cell]) + "\n"
-                    
                     if page_text:
-                        text += f"\n--- Page {page_num} ---\n{page_text}\n"
-            
-            # Clean up the text
-            text = text.strip()
-            
-            # If we got very little text, it might be an image-based PDF
-            if len(text) < 100:
-                return f"Warning: Only extracted {len(text)} characters. This PDF might be image-based or encrypted. Extracted content: {text}"
-            
-            return text
-            
+                        # Basic filtering: ignore lines that are just a single number (often page numbers)
+                        filtered_lines = [line for line in page_text.split('\n') if len(line.strip()) > 2 or not line.strip().isdigit()]
+                        text += "\n".join(filtered_lines) + "\n"
         except Exception as e:
-            raise ValueError(f"Failed to parse PDF: {str(e)}")
+            print(f"pdfplumber failed: {e}")
+
+        # Strategy 2: pypdf (Better for certain encodings, use as fallback/append if text is short)
+        if len(text.strip()) < 100:
+            try:
+                from pypdf import PdfReader
+                reader = PdfReader(io.BytesIO(file_content))
+                pypdf_text = ""
+                for page in reader.pages:
+                    pypdf_text += page.extract_text() + "\n"
+                
+                if len(pypdf_text.strip()) > len(text.strip()):
+                    text = pypdf_text
+            except Exception as e:
+                print(f"pypdf failed: {e}")
+
+        text = text.strip()
+        
+        # Final safety check: If we still only have numbers or very little text
+        digits_only = "".join([c for c in text if c.isdigit()])
+        if len(text) > 0 and (len(digits_only) / len(text)) > 0.5 and len(text) < 200:
+             return f"Warning: Extracted content looks like mostly metadata or page numbers. Please ensure the PDF is text-based. Extracted: {text[:100]}"
+        
+        return text
 
 parser_service = ParserService()
