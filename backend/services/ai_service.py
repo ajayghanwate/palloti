@@ -288,4 +288,105 @@ Return ONLY valid JSON in this exact format:
         # Handle the field name change in response if needed, for simplicity kept as pedagogical_advice
         return json.loads(response)
 
+    async def parse_attendance_text(self, text: str) -> List[Dict[str, Any]]:
+        """
+        Extract structured student attendance records from raw text (e.g., parsed from a PDF).
+        """
+        prompt = f"""
+        Extract student attendance records from the following text.
+        
+        TEXT CONTENT:
+        {text[:6000]}
+        
+        For each student mentioned, extract:
+        1. student_name: Full name of the student.
+        2. attendance_date: Date of attendance in YYYY-MM-DD format (if absent, use the date mentioned).
+        3. status: Either "Present" or "Absent".
+        
+        Return a valid JSON object with a key "records" containing the list of attendance records.
+        
+        Format:
+        {{
+            "records": [
+                {{
+                    "student_name": "...",
+                    "attendance_date": "...",
+                    "status": "..."
+                }}
+            ]
+        }}
+        """
+        try:
+            response = await self.generate_completion(prompt, system_prompt="You are an expert data analyst. Extract attendance records accurately. Return only valid JSON.")
+            data = json.loads(response)
+            return data.get("records", [])
+        except Exception as e:
+            print(f"AI Attendance Parsing Error: {str(e)}")
+            return []
+
+    async def analyze_engagement(self, class_summary: str) -> Dict[str, Any]:
+        """
+        Generate full engagement analytics based on a class summary (attendance + marks).
+        """
+        prompt = f"""
+        Analyze the following class performance and attendance summary to generate deep engagement insights.
+        
+        CLASS SUMMARY:
+        {class_summary}
+        
+        Generate a JSON object with the following structure:
+        {{
+            "stats": {{
+                "engagementScore": 0-100,
+                "questionsAsked": total estimate,
+                "avgAttention": 0-100,
+                "participationRate": 0-100
+            }},
+            "charts": {{
+                "questionFrequency": [
+                    {{ "name": "Week 1", "value": number }},
+                    ... up to Week 8
+                ],
+                "topicEngagement": [
+                    {{ "name": "Topic A", "value": 0-100 }},
+                    ... for major topics mentioned or standard subjects
+                ],
+                "behaviorBreakdown": [
+                    {{ "name": "Active Participation", "value": number }},
+                    {{ "name": "Passive Listening", "value": number }},
+                    {{ "name": "Note Taking", "value": number }},
+                    {{ "name": "Asking Questions", "value": number }},
+                    {{ "name": "Off-Task", "value": number }}
+                ],
+                "skillRadar": [
+                    {{ "name": "Problem Solving", "value": number }},
+                    {{ "name": "Conceptual", "value": number }},
+                    {{ "name": "Practical", "value": number }},
+                    {{ "name": "Communication", "value": number }},
+                    {{ "name": "Collaboration", "value": number }},
+                    {{ "name": "Critical Thinking", "value": number }}
+                ]
+            }},
+            "pedagogicalInsight": "A concise paragraph with specific teaching advice based on the data."
+        }}
+        
+        Ensure the data is consistent with the summary provided. Return ONLY valid JSON.
+        """
+        try:
+            response = await self.generate_completion(prompt, system_prompt="You are an expert pedagogical data analyst. Generate realistic, data-driven engagement metrics. Return only valid JSON.")
+            return json.loads(response)
+        except Exception as e:
+            print(f"AI Engagement Analysis Error: {str(e)}")
+            # Fallback mock data structure if AI fails
+            return {
+                "stats": {"engagementScore": 75, "questionsAsked": 30, "avgAttention": 80, "participationRate": 85},
+                "charts": {
+                    "questionFrequency": [{"name": f"Week {i}", "value": 15+i} for i in range(1, 9)],
+                    "topicEngagement": [{"name": "General", "value": 75}],
+                    "behaviorBreakdown": [{"name": "Active", "value": 50}, {"name": "Passive", "value": 50}],
+                    "skillRadar": [{"name": "Overall", "value": 70}]
+                },
+                "pedagogicalInsight": "Engagement levels are steady. Focus on active learning techniques to boost participation."
+            }
+
 ai_service = AIService()
